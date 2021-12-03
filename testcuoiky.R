@@ -165,7 +165,7 @@ dropdownButton <- function(label = "", status = c("default", "primary", "success
     tabPanel("Boxplot", plotOutput("boxplot_q1_chart")),
   ),
   div(
-    h5("1, Tuong quan giua quoc gia san xuat va diem ibmd")
+    h5("2, Tuong quan giua quoc gia san xuat va diem ibmd")
   ),
   tabsetPanel(
     tabPanel("Movie vs Ibmd", plotOutput("hisplot_q2_chart")),
@@ -173,13 +173,35 @@ dropdownButton <- function(label = "", status = c("default", "primary", "success
     tabPanel("Top Ibmd", plotOutput("hisplot3_q2_chart")),
   ),
   div(
-    h5("1, Moi tuong quan giua ngan sach(xoa <1) va tong thu")
+    h5("3, Moi tuong quan giua ngan sach(xoa <1) va tong thu")
   ),
   tabsetPanel(
     tabPanel("Budget vs Gross", plotOutput("hisplot_q3_chart")),
-
+    
+    
+  ),
+  div(
+    h5("4, Moi tuong quan giua ngan sach(xoa <1) va tong thu")
+  ),
+  tabsetPanel(
+    tabPanel("Budget vs Gross", plotOutput("hisplot_q4_chart")),
+  ),
+  div(
+    h5("5, Moi tuong quan giua the loai phim va IMDB")
+  ),
+  tabsetPanel(
+    tabPanel("Genres vs Imdb", plotOutput("hisplot_q5_chart")),
+    
   ),
   
+  div(
+    h5("6, Tac gia")
+  ),
+  tabsetPanel(
+    tabPanel("tac gia vs Imdb", plotOutput("hisplot_q6_chart")),
+    tabPanel("tac gia vs Imdb", plotOutput("hisplot2_q6_chart")),
+    
+  ),
 )
 }
 
@@ -257,7 +279,7 @@ server <- function(input, output, session) {
     summary(datamovie[, input$inputOfChart])
   })
   # controller question
-  #Q1
+  #Q1 ##############
   output$hisplot_q1_chart  = renderPlot({
     datamovie %>%
       group_by(title_year) %>%
@@ -305,15 +327,95 @@ server <- function(input, output, session) {
   })
   
   #Q3 ##########################
-  newmovie1<-subset(datamovie, budget > 1)
+  q3_data = datamovie
+  q3_cleaned_data = q3_data %>%
+    subset(!is.na(gross)) %>%
+    subset(!is.na(budget)) 
+  function_convert_05 <- function(score) {
+    x = score%/%0.5
+    y = x*0.5
+    if(y<score){
+      y <- y  + 0.5
+    }
+    return (y)
+  }
+  q3_cleaned_data$imdb_score_level <- function_convert_05(q3_cleaned_data$imdb_score)
+  
   output$hisplot_q3_chart  = renderPlot({
-    newmovie1 %>% ggplot(aes(x = gross, y = budget, group = 1)) + 
-      geom_point() +
-      geom_line() +
-      geom_smooth() + 
-      labs(x="Movies Year", y="Mean IMDB score every year") + 
-      ggtitle("Mean IMDB score for each year")
+    q3_cleaned_data %>%
+      group_by(imdb_score_level) %>%
+      summarise(score_count = n(), 
+                mean_budget = mean(budget, na.rm = TRUE)) %>%
+      ggplot() +
+      geom_point(aes(x = as.factor(imdb_score_level), y = mean_budget)) +
+      geom_path(aes(x = as.factor(imdb_score_level), y = mean_budget, group = 1), size = 1, color = 4) +
+      labs(x = "IMDB score level", y = "Each score level mean budget(US Dollar)", title = "Different IMDB score level's mean budget")
     
+  })
+  
+  #Q4 #####################
+  q4_cleaned_data <- q3_cleaned_data
+  output$hisplot_q4_chart = renderPlot({
+    q4_cleaned_data %>%
+      group_by(imdb_score_level) %>%
+      summarise(score_count = n(), 
+                mean_gross = mean(gross, na.rm = TRUE)) %>%
+      ggplot() +
+      geom_point(aes(x = as.factor(imdb_score_level), y = mean_gross)) +
+      geom_path(aes(x = as.factor(imdb_score_level), y = mean_gross, group = 1), size = 1, color = 6) +
+      labs(x = "IMDB score level", y = "Each score level mean gross(US Dollar)", title = "Different IMDB score level's mean gross")
+  })
+  #Q5 ####################
+  judgeAndSplit <- function(x) {
+    sp = strsplit(x, '[|]')[[1]][1]
+    return(sp)
+  }
+  genres_name = as.character(datamovie$genres) 
+  newdatamovie = datamovie %>%
+    mutate(genres1 = as.factor(sapply(genres_name, judgeAndSplit)))
+  typeLabelCount = newdatamovie %>%
+    group_by(genres1) %>%
+    summarise(count = n()) %>%
+    as.data.frame()
+  output$hisplot_q5_chart = renderPlot({
+    newdatamovie %>%
+      ggplot(aes(reorder(genres1, imdb_score, median, order = TRUE), y = imdb_score, fill = genres1)) + 
+      geom_boxplot() + 
+      coord_flip() + 
+      geom_label(data = typeLabelCount, aes(x = genres1, y = 10, label = count),  hjust = 0, size = 3) + 
+      ggtitle("Ordered imdb scores distribution by popular movie genres") + 
+      guides(fill=FALSE) + 
+      ylim(0, 11) +
+      labs(x = "Popular movie genre", y = "IMDB score")
+  })
+  # Q6 ###############
+  q6_data <- datamovie
+  
+  output$hisplot_q6_chart = renderPlot({
+    q6_data %>%
+      subset(director_name != "") %>%
+      group_by(director_name) %>%
+      summarise(director_movies_count = n()) %>%
+      filter(director_movies_count >= 10) %>%
+      ggplot(aes(x = reorder(director_name, director_movies_count), y = director_movies_count)) + 
+      geom_bar(stat = "identity", aes(fill = as.factor(director_movies_count))) +
+      coord_flip() + 
+      guides(fill=guide_legend(title="MoviesnQuantity")) +
+      labs(x = "Director Name", y = "Movies number", title = "Director movies number ranking")
+  })
+  topDirectors = q6_data %>%
+    subset(director_name != "") %>%
+    group_by(director_name) %>%
+    summarise(director_movies_count = n()) %>%
+    filter(director_movies_count >= 10)
+  directorList = lapply(topDirectors[1], as.factor) 
+  output$hisplot2_q6_chart = renderPlot({
+    q6_data[q6_data$director_name %in% directorList$director_name, ] %>%
+      ggplot(aes(reorder(director_name, imdb_score, median, order = TRUE), y = imdb_score, fill = director_name)) + 
+      geom_boxplot() + 
+      guides(fill=FALSE) + 
+      coord_flip() + 
+      labs(x = "Director Name", y = "IMDB score", title = "Director IMDB score ranking")
   })
 }
 

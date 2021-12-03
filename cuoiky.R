@@ -13,8 +13,39 @@ dim(movie)
 summary(movie)
 head(movie, 15)
 View(movie)
+q5_data = movie
+q5_cleaned_data = q5_data %>%
+  subset(!is.na(gross)) %>%
+  subset(!is.na(budget)) 
+q5_cleaned_data$imdb_score_level <- round(q5_cleaned_data$imdb_score, 1)
+View(q5_cleaned_data)
 
 # 
+judgeAndSplit <- function(x) {
+  sp = strsplit(x, '[|]')[[1]][1]
+  return(sp)
+}
+genres_name = as.character(movie$genres) 
+movie = movie %>%
+  mutate(genres1 = as.factor(sapply(genres_name, judgeAndSplit)))
+View(movie)
+typeLabelCount = movie %>%
+  group_by(genres1) %>%
+  summarise(count = n()) %>%
+  as.data.frame()
+
+movie %>%
+  ggplot(aes(reorder(genres1, imdb_score, median, order = TRUE), y = imdb_score, fill = genres1)) + 
+  geom_boxplot() + 
+  coord_flip() + 
+  geom_label(data = typeLabelCount, aes(x = genres1, y = 10, label = count),  hjust = 0, size = 3) + 
+  ggtitle("Ordered imdb scores distribution by popular movie genres") + 
+  guides(fill=FALSE) + 
+  ylim(0, 11) +
+  labs(x = "Popular movie genre", y = "IMDB score")
+
+
+
 
 
 
