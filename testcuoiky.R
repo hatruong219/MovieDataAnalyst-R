@@ -1,12 +1,15 @@
 ## app.R ##
+rm(list = ls())
 library(shinydashboard)
 library(shiny)
 library(dplyr)
 library(shinythemes)
 library(ggplot2)
 library(Hmisc)
+library(ggpubr)
+library(factoextra)
 library(psych)
-datamovie=read.csv("Z:\\VKU-Study\\datasetforR\\Cuoiky\\movie_data.csv")
+datamovie=read.csv("Z:\\VKU-Study\\datasetforR\\Cuoiky\\movie_data.csv", stringsAsFactors = TRUE)
 names(datamovie)[3:18]
 names(datamovie)
 datamovie_100 = head(datamovie, 100)
@@ -43,55 +46,126 @@ dropdownButton <- function(label = "", status = c("default", "primary", "success
 }
 
 ## menu data
-
-
-## menu bieu do menu1_left
-{menuleft_1 <- tabItem(tabName = "dashboard",
-   
+## menu dataset
+{menu_dataset <- tabItem(tabName = "menu_dataset",
+   fluidRow(
+     infoBoxOutput(width = 3 ,"menu_dataset_inforbox_1"),
+     infoBoxOutput(width = 3, "menu_dataset_inforbox_2"),
+     infoBoxOutput(width = 3, "menu_dataset_inforbox_3"),
+     infoBoxOutput(width = 3, "menu_dataset_inforbox_4")
+   ),
   fluidRow(
-
     tabBox(
       width = 12,
       title = "Dataset",
       side = "right", height = "800px",
       selected = "Tables",
-      tabPanel(
-        title = "Tables",
-        div(
-          h4("Data tables")
-        ),
-        div(
-          dropdownButton(
-            label = "Hide field", status = "default", width = 650,
-            tags$label("Choose :"),
-            fluidRow(
-              column(
-                width = 4,
-                checkboxGroupInput("checkInput1",label = NULL,choices = c(names(datamovie)[1:9]))
-              ),
-              column(
-                width = 4,
-                checkboxGroupInput("checkInput2",label = NULL,choices = c(names(datamovie)[10:18]))
-              ),
-              column(
-                width = 4,
-                checkboxGroupInput("checkInput3",label = NULL,choices = c(names(datamovie)[19:26]))
+        tabPanel(
+          title = "Tables",
+          div(
+            h4("Data tables")
+          ),
+          div(
+            dropdownButton(
+              label = "Hide field", status = "default", width = 650,
+              tags$label("Choose :"),
+              fluidRow(
+                column(
+                  width = 4,
+                  checkboxGroupInput("checkInput1",label = NULL,choices = c(names(datamovie)[1:9]))
+                ),
+                column(
+                  width = 4,
+                  checkboxGroupInput("checkInput2",label = NULL,choices = c(names(datamovie)[10:18]))
+                ),
+                column(
+                  width = 4,
+                  checkboxGroupInput("checkInput3",label = NULL,choices = c(names(datamovie)[19:26]))
+                )
               )
-            )
+            ),
+            fluidRow(
+              column(4, selectInput(width = "200px","selectInput1", "Choose a Country:",
+                                    c("All", sort(unique(datamovie$country))))),
+              column(4, selectInput(width = "200px","selectInput2", "Choose a Language:",
+                                    c("All", sort(unique(datamovie$language))))),
+            ),
+            
           ),
-          fluidRow(
-            column(4, selectInput(width = "200px","selectInput1", "Choose a Country:",
-                                  c("All", sort(unique(datamovie$country))))),
-            column(4, selectInput(width = "200px","selectInput2", "Choose a Language:",
-                                  c("All", sort(unique(datamovie$language))))),
-          ),
+          div(style = 'overflow-y:scroll;height:500px;',
+              tableOutput('table_dataset')
+          )
           
         ),
-        div(style = 'overflow-y:scroll;height:500px;',
-            tableOutput('table_dataset')
+        tabPanel(
+          title = "Detail",
+          div(
+            strong(
+              span("color : ", style = "color:blue"),
+              " màu sắc của phim",
+              br(),
+              span("num_critic_for_reviews: ", style = "color:blue"),
+              " số bài đánh giá của các nhà phê bình",
+              br(),
+              span("duration : ", style = "color:blue"),
+              " thời lượng của phim",
+              br(),
+              span("genres : ", style = "color:blue"),
+              " thể loại của phim",
+              br(),
+              span("aspect_ratio : ", style = "color:blue"),
+              " tỷ lệ khung hình được sử dụng trong phim",
+              br(),
+              span("language : ", style = "color:blue"),
+              " ngôn ngữ được sử dụng trong phim",
+              br(),
+              span("country : ", style = "color:blue"),
+              " quốc gia sản xuất",
+              br(),
+              span("movie_title : ", style = "color:blue"),
+              " tên phim",
+              br(),
+              span("content_rating : ", style = "color:blue"),
+              " Hệ thống phân loại phim",
+              br(),
+              span("movie_imdb_link : ", style = "color:blue"),
+              " link phim trên imdb",
+              br(),
+              span("title_year : ", style = "color:blue"),
+              " năm",
+              br(),
+              span("plot_keywords : ", style = "color:blue"),
+              " từ khóa được tìm kiếm",
+              br(),
+              span("num_user_for_reviews : ", style = "color:blue"),
+              " số người dùng cho đánh giá",
+              br(),
+              span("num_voted_users : ", style = "color:blue"),
+              " số người bình chọn",
+              br(),
+              span("facenumber_in_poster : ", style = "color:blue"),
+              " số người xuất hiện trong poster",
+              br(),
+              span("budget : ", style = "color:blue"),
+              " Ngân sách làm phim",
+              br(),
+              span("gross : ", style = "color:blue"),
+              " Doanh thu",
+              br(),
+              
+              
+              span("{director_name, director_facebook_likes,</br>
+              actor_1_name, actor_1_facebook_likes,
+              actor_2_name, actor_2_facebook_likes,
+                   actor_3_name, actor_3_facebook_likes }", style = "color:blue"),
+              br(),
+              "Tên và số like facebook của các đối tượng"
+              
+              
+            ),
+          )
         )
-        
-      ),
+    
     ),
     
     
@@ -100,110 +174,135 @@ dropdownButton <- function(label = "", status = c("default", "primary", "success
 )}
 ## menu left chart
 {menuleft_chart <- tabItem(tabName = "menuchart",
-  fluidRow(
-    div(
-      style="padding:15px;",
-      dropdownButton(
-        label = "Hide field", status = "default",
-        tags$label("Choose :"),
-        fluidRow(
-          column(
-            width = 4,
-            radioButtons(
-              inputId  = "inputOfChart",
-              label = NULL,
-              choices = c(names(datamovie)[1:9]),
-              selected = names(datamovie)[1]
-            )
-          ),
-          column(
-            width = 4,
-            radioButtons(
-              inputId  = "inputOfChart",
-              label = NULL,
-              choices = c(names(datamovie)[10:18]),
-              selected = "mpg"
-            )
-          ),
-          column(
-            width = 4,
-            radioButtons(
-              inputId  = "inputOfChart",
-              label = NULL,
-              choices = c(names(datamovie)[19:26]),
-              selected = "mpg"
-            )
-          )
-        )
-      ),
-      
-      selectInput(width = "200px","selectInput_menuchart", "Choose a variable:",
-                  c(sort(unique(names(datamovie)))))
-    ),
-    tabBox(
-      width = 12,
-      title = "Dataset",
-      side = "right",
-      selected = "Boxplot",
-      tabsetPanel(
-        tabPanel("Boxplot", plotOutput("plot_menu_chart")),
-        tabPanel("Summary", verbatimTextOutput("summary_menu_chart")),
-      )
-    ),
-   
-  ),
+   fluidRow(
+     box(plotOutput("so_luong_phim_qua_tung_nam"), width = 12),
+     box(plotOutput("so_luong_phim_theo_quoc_gia"), width = 12),
+     box(plotOutput("so_luong_binh_chon_tung_phim"), width = 12),
+     box(plotOutput("so_luong_danh_gia_tung_phim"), width = 12),
+     box(plotOutput("danh_thu"), width = 12),
+   )
 )
 }
 ##menuquestion
 {menuquestion <- tabItem(tabName = "menuquestion",
   div(
-    h5("1, Moi tuong quan giua nam san xuat va diem cua bo phim")
+    h5("Mối tương quan giữa năm sản xuất và điểm của phim")
   ),
   tabsetPanel(
-    tabPanel("Histogram plot", plotOutput("hisplot_q1_chart")),
-    tabPanel("Histogram 2 plot", plotOutput("hisplot2_q1_chart")),
+    tabPanel("Plot 1", plotOutput("hisplot_q1_chart")),
+    tabPanel("Plot 2", plotOutput("hisplot2_q1_chart")),
     tabPanel("Boxplot", plotOutput("boxplot_q1_chart")),
   ),
   div(
-    h5("2, Tuong quan giua quoc gia san xuat va diem ibmd")
+    h5("Điểm imdb đối với phim từ các quốc gia khác nhau")
   ),
   tabsetPanel(
-    tabPanel("Movie vs Ibmd", plotOutput("hisplot_q2_chart")),
-    tabPanel("Movie vs Count", plotOutput("hisplot2_q2_chart")),
-    tabPanel("Top Ibmd", plotOutput("hisplot3_q2_chart")),
+    tabPanel("Plot 1", plotOutput("hisplot_q2_chart")),
+    tabPanel("Plot 2", plotOutput("hisplot2_q2_chart")),
+    tabPanel("Plot 3", plotOutput("hisplot3_q2_chart")),
   ),
   div(
-    h5("3, Moi tuong quan giua ngan sach(xoa <1) va tong thu")
+    h5("Ngân sách ảnh hưởng như thế nào đến điểm IMDB")
   ),
   tabsetPanel(
-    tabPanel("Budget vs Gross", plotOutput("hisplot_q3_chart")),
+    tabPanel("Plot", plotOutput("hisplot_q3_chart")),
     
     
   ),
   div(
-    h5("4, Moi tuong quan giua ngan sach(xoa <1) va tong thu")
+    h5("Điểm Imdb tác động thế nào đến tổng thu từ bộ phim")
   ),
   tabsetPanel(
-    tabPanel("Budget vs Gross", plotOutput("hisplot_q4_chart")),
+    tabPanel("Plot", plotOutput("hisplot_q4_chart")),
   ),
   div(
-    h5("5, Moi tuong quan giua the loai phim va IMDB")
+    h5("Thể loại phim và IMDB")
   ),
   tabsetPanel(
-    tabPanel("Genres vs Imdb", plotOutput("hisplot_q5_chart")),
+    tabPanel("Plot", plotOutput("hisplot_q5_chart")),
     
   ),
   
   div(
-    h5("6, Tac gia")
+    h5("Tìm hiểu về các tác giả")
   ),
   tabsetPanel(
-    tabPanel("tac gia vs Imdb", plotOutput("hisplot_q6_chart")),
-    tabPanel("tac gia vs Imdb", plotOutput("hisplot2_q6_chart")),
+    tabPanel("Plot 1", plotOutput("hisplot_q6_chart")),
+    tabPanel("Plot 2", plotOutput("hisplot2_q6_chart")),
     
   ),
 )
 }
+
+##menu one var
+
+{menu_model_1_predict <- tabItem(tabName = "menu_model_1_predict",
+     fluidRow(
+       box(plotOutput("predict_menu_1_plot"), width = 6),
+       box(verbatimTextOutput("predict_menu_1_summary"), width = 6),
+       
+     )
+)}
+
+####menu predict
+{menu_model_predict <- tabItem(tabName = "menu_model_predict",
+       tabsetPanel(
+         
+         tabPanel("Summary", verbatimTextOutput("summary_predict")),
+         tabPanel("Plot", 
+                  plotOutput("plot_predict_1"),
+         ),
+         tabPanel("Phương trình", 
+                  div(
+                    pre(
+                      print("
+imdb_score = (4.928e+01) + (2.693e-03)*num_critic_for_reviews 
+              + (1.134e-02)*duration 
+              + (3.266e-06)*num_voted_users 
+              + (-5.379e-04)*num_user_for_reviews 
+              + (-2.224e-02)*title_year 
+              + (-5.203e-09)*budget ")
+                    )
+                  )
+                  ),
+         
+       ),
+       tabsetPanel(
+       tabPanel(
+         title = "Predict",
+         div(
+           fluidRow(
+             column(width = 4,numericInput('input_title_year', 'Enter title_year', 0),),
+             column(width = 4,numericInput('input_num_critic_for_reviews', 'Enter num_critic_for_reviews', 0),),
+             column(width = 4,numericInput('input_duration', 'Enter duration', 0),),
+           ),
+           fluidRow(
+             column(width = 4,numericInput('input_num_voted_users', 'Enter num_voted_users', 0),),
+             column(width = 4,numericInput('input_num_user_for_reviews', 'Enter num_user_for_reviews', 0),),
+             column(width = 4,numericInput('input_budget', 'Enter butget', 0),)
+           ),
+
+           fluidRow(
+             column(width = 4, actionButton("show_predict1", "Show modal dialog"))
+           )
+         )
+       )
+     )
+)
+}
+
+##kmeans
+{kmeans_tab <- tabItem(tabName = "kmeans_tab",
+     tabsetPanel(
+       
+       tabPanel("ebow", plotOutput("ebow_plot")),
+       tabPanel("kmeans", 
+                plotOutput("kmeans_plot"),
+       )
+       
+     ),
+)}
+
 
 ## ui function
 {ui <- dashboardPage(
@@ -211,26 +310,59 @@ dropdownButton <- function(label = "", status = c("default", "primary", "success
   ## Sidebar content
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Bieu do", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("Chart", tabName = "menuchart", icon = icon("th")),
-      menuItem("Question", tabName = "menuquestion", icon = icon("th"))
+      menuItem("Dataset", tabName = "menu_dataset", icon = icon("dashboard")),
+      menuItem("Chart", tabName = "menuchart", icon = icon("bar-chart-o")),
+      menuItem("Question", tabName = "menuquestion", icon = icon("th")),
+      
+      menuItem("Model one var", tabName = "menu_model_1_predict", icon = icon("list-alt")),
+      menuItem("Model Predict", tabName = "menu_model_predict", icon = icon("list-alt")),
+      menuItem("Kmeans", tabName = "kmeans_tab", icon = icon("list-alt"))
     )
   ),
   ## Body content
   dashboardBody(
     tabItems(
       # First tab content
-      menuleft_1,
+      menu_dataset,
       # Second tab content
       menuleft_chart,
-      menuquestion
+      menuquestion,
+      menu_model_1_predict,
+      menu_model_predict,
+      kmeans_tab
     )
-  )
+  ),
+  tags$head(tags$style(HTML('* {font-family: "Arial", charset="utf-8"};')))
 )}
 
 server <- function(input, output, session) {
   set.seed(122)
   histdata <- rnorm(500)
+  # menu 1
+  output$menu_dataset_inforbox_1 <- renderInfoBox({
+    infoBox(
+      "Total Movie", dim(datamovie)[1],
+      color = "purple"
+    )
+  })
+  output$menu_dataset_inforbox_2 <- renderInfoBox({
+    infoBox(
+      "Mean Imbd", format(round(mean(datamovie$imdb_score), 2), nsmall = 2),
+      color = "purple"
+    )
+  })
+  output$menu_dataset_inforbox_3 <- renderInfoBox({
+    infoBox(
+      "Max Imbd", max(datamovie$imdb_score),
+      color = "purple"
+    )
+  })
+  output$menu_dataset_inforbox_4 <- renderInfoBox({
+    infoBox(
+      "Min Imbd", min(datamovie$imdb_score),
+      color = "purple"
+    )
+  })
   output$table_dataset=renderTable(
     {
       x1<-input$checkInput1
@@ -274,10 +406,83 @@ server <- function(input, output, session) {
       
     }
   ) 
-  # controller menu chart
-  output$summary_menu_chart = renderPrint({
-    summary(datamovie[, input$inputOfChart])
+  
+  # controller menu help #################
+  data = datamovie
+  output$so_luong_phim_qua_tung_nam <- renderPlot({
+    
+    qplot(data$imdb_score, geom = "histogram", xlab = "IMDB score", ylab = "Count", fill=I("blue"),
+          col=I("red"),
+          binwidth = 1,
+          alpha=I(.5))+  scale_color_manual(name = "statistics", values = c(mean = "red"))
+    
+   
+    
   })
+  
+  output$so_luong_phim_theo_quoc_gia <- renderPlot({
+    
+    qplot(data$duration, geom = "histogram", xlab = "Thời lượng phim", ylab = "Count", fill=I("black"),
+          col=I("red"),
+          binwidth = 1,
+          alpha=I(.5))+
+      scale_color_manual(name = "statistics", values = c(mean = "red"))
+    
+    
+  })
+  
+  #Bieu do the hien so luong binh chon cua tung phim, lay 5 phi co so luong cao nhat
+  
+  output$so_luong_binh_chon_tung_phim <- renderPlot({
+    qplot(data$num_user_for_reviews, geom = "histogram", xlab = "Reviews", ylab = "Count", fill=I("black"),
+          col=I("green"),
+          binwidth = 1,
+          alpha=I(.5))+
+      scale_color_manual(name = "statistics", values = c(mean = "grey"))
+    
+  })
+  
+  
+  #Bieu do the hien so luong binh chon cua tung phim, lay 5 phi co so luong cao nhat
+  
+  output$so_luong_danh_gia_tung_phim <- renderPlot({
+    
+    data = data.frame(
+      movie = data$movie_title,
+      number = data$num_user_for_reviews
+    )
+    
+    data = head(arrange(data,desc(data$number)), n = 7)
+    
+    vote <- ggplot(data, aes(x = movie, y = number, group=1)) +
+      geom_line(color="green")+
+      geom_point()
+    
+    # add title ...
+    print(vote + labs(title= "Bieu do the hien so luong danh gia cua tung phim, lay 5 phi co so luong cao nhat",
+                      y="So luong", x = "Ten phim"))
+    
+  })
+  
+  # bieu do the hien ti so cau thu voi tuoi
+  output$danh_thu <- renderPlot({
+    
+    danh_thu = data.frame(
+      x = c(data$movie_title),
+      y = c(data$gross)
+    )
+    
+    danh_thu = head(arrange(danh_thu,desc(danh_thu$y)), n = 10)
+    
+    ggplot(danh_thu, aes(x, y))+
+      geom_bar(stat="identity", width=0.5, fill="red") +
+      labs(title="Bieu do the hien so luong phim qua tung nam", subtitle="In May, 2021")+
+      theme_minimal()
+    
+  })
+  
+  
+  
   # controller question
   #Q1 ##############
   output$hisplot_q1_chart  = renderPlot({
@@ -288,8 +493,8 @@ server <- function(input, output, session) {
       geom_point() +
       geom_line() +
       geom_smooth() + 
-      labs(x="Movies Year", y="Mean IMDB score every year") + 
-      ggtitle("Mean IMDB score for each year")
+      labs(x="Năm", y="Điểm trung bình Imdb") + 
+      ggtitle("Điểm Imdb qua mỗi năm")
   })
   output$hisplot2_q1_chart= renderPlot({
     datamovie %>%
@@ -298,13 +503,13 @@ server <- function(input, output, session) {
       ggplot(aes(x = title_year, y = count_year, fill = count_year)) + 
       geom_bar(stat = "identity") + 
       geom_text(aes(2009, 280, label = "Max = 260" )) + 
-      labs(x="Movies Year", y="Year Count") + 
-      ggtitle("Distribution of year for the movies count") + 
+      labs(x="Năm sản xuất", y="Số lượng") + 
+      ggtitle("Biểu đồ phân phối số lượng phim qua từng năm") + 
       scale_fill_gradient(low = "purple", high = "red")
   })
   output$boxplot_q1_chart  = renderPlot({
     boxplot(imdb_score ~ title_year, data=datamovie, col='indianred')
-    title("IMDB score vs Title year")
+    title("Biểu đồ box tương quan giữa điểm imdb và năm sản xuất")
   })
   #Q2 ###########################################################
   country_group <- group_by(datamovie, country)
@@ -313,17 +518,17 @@ server <- function(input, output, session) {
                                 n = n()) 
   output$hisplot_q2_chart  = renderPlot({
     ggplot(aes(x = country, y = mean_score, fill = country), data = movie_by_country) + geom_bar(stat = 'identity') + theme(legend.position = "none", axis.text=element_text(size=7)) +
-      coord_flip() + ggtitle('Countries vs IMDB Scores')
+      coord_flip() + ggtitle('Quốc gia và điểm IMDB')
   })
   output$hisplot2_q2_chart = renderPlot({
     ggplot(aes(x = country, y = n, fill = country), data = movie_by_country) + geom_bar(stat = 'identity') + theme(legend.position = "none", axis.text=element_text(size=6)) +
-      coord_flip() + ggtitle('Countries vs Number of Movies')
+      coord_flip() + ggtitle('Quốc gia và số lượng phim')
   })
   output$hisplot3_q2_chart = renderPlot({
     newdata <- movie_by_country[order(-movie_by_country$mean_score),]
     temp = head(newdata, 10)
     ggplot(aes(x = country, y = mean_score, fill = country), data = temp) + geom_bar(stat = 'identity') + theme(legend.position = "none", axis.text=element_text(size=7)) +
-      coord_flip() + ggtitle('Countries vs Number of Movies')
+      coord_flip() + ggtitle('Những quốc gia có điểm IMDB cao nhất')
   })
   
   #Q3 ##########################
@@ -349,7 +554,7 @@ server <- function(input, output, session) {
       ggplot() +
       geom_point(aes(x = as.factor(imdb_score_level), y = mean_budget)) +
       geom_path(aes(x = as.factor(imdb_score_level), y = mean_budget, group = 1), size = 1, color = 4) +
-      labs(x = "IMDB score level", y = "Each score level mean budget(US Dollar)", title = "Different IMDB score level's mean budget")
+      labs(x = "Mức điểm IMDB", y = "Ngân sách phim tại mỗi mức điểm", title = "Ngân sách trung bình tại các mức điểm IMDB")
     
   })
   
@@ -363,7 +568,7 @@ server <- function(input, output, session) {
       ggplot() +
       geom_point(aes(x = as.factor(imdb_score_level), y = mean_gross)) +
       geom_path(aes(x = as.factor(imdb_score_level), y = mean_gross, group = 1), size = 1, color = 6) +
-      labs(x = "IMDB score level", y = "Each score level mean gross(US Dollar)", title = "Different IMDB score level's mean gross")
+      labs(x = "Mức điểm IMDB", y = "Tổng thu trung bình", title = "Tổng thu tại mỗi mức điểm IMDB")
   })
   #Q5 ####################
   judgeAndSplit <- function(x) {
@@ -383,10 +588,10 @@ server <- function(input, output, session) {
       geom_boxplot() + 
       coord_flip() + 
       geom_label(data = typeLabelCount, aes(x = genres1, y = 10, label = count),  hjust = 0, size = 3) + 
-      ggtitle("Ordered imdb scores distribution by popular movie genres") + 
+      ggtitle("Biểu đồ phân phối điểm IMDB theo thể loại phim") + 
       guides(fill=FALSE) + 
       ylim(0, 11) +
-      labs(x = "Popular movie genre", y = "IMDB score")
+      labs(x = "Thể loại phim", y = "Điểm IMDB")
   })
   # Q6 ###############
   q6_data <- datamovie
@@ -400,8 +605,8 @@ server <- function(input, output, session) {
       ggplot(aes(x = reorder(director_name, director_movies_count), y = director_movies_count)) + 
       geom_bar(stat = "identity", aes(fill = as.factor(director_movies_count))) +
       coord_flip() + 
-      guides(fill=guide_legend(title="MoviesnQuantity")) +
-      labs(x = "Director Name", y = "Movies number", title = "Director movies number ranking")
+      guides(fill=guide_legend(title="Số lượng phim")) +
+      labs(x = "Tên đạo diễn", y = "Số lượng phim", title = "Bảng xếp hạng đạo diễn theo số lượng phim sản xuất")
   })
   topDirectors = q6_data %>%
     subset(director_name != "") %>%
@@ -415,8 +620,120 @@ server <- function(input, output, session) {
       geom_boxplot() + 
       guides(fill=FALSE) + 
       coord_flip() + 
-      labs(x = "Director Name", y = "IMDB score", title = "Director IMDB score ranking")
+      labs(x = "Tên đạo diễn", y = "Điểm IMDB", title = "Bảng xếp hạng đạo diễn theo điểm IMDB")
   })
+  
+  
+  # menu don bien  #########################
+  #bieu do
+  movie_data_predict <- subset(datamovie, datamovie$budget > 0)
+  movie_data_predict = movie_data_predict %>%
+    subset(!is.na(gross)) %>%
+    subset(!is.na(budget)) 
+  movie_data_predict =movie_data_predict[ -c(2988), ]
+  output$predict_menu_1_plot <- renderPlot({
+    data = data.frame(
+      num_critic_for_reviews = c(movie_data_predict$num_critic_for_reviews),
+      imdb_score = c(movie_data_predict$imdb_score)
+    )
+    
+    hoiquy <- lm(data = data, imdb_score ~ num_critic_for_reviews)
+    
+    plot(imdb_score~num_critic_for_reviews,data=data)
+    abline(hoiquy,col="red")
+    
+  })
+  
+  output$predict_menu_1_summary <- renderPrint({
+    data = data.frame(
+      num_critic_for_reviews = c(movie_data_predict$num_critic_for_reviews),
+      imdb_score = c(movie_data_predict$imdb_score)
+    )
+    
+    hoiquy <- lm(data = data, imdb_score ~ num_critic_for_reviews)
+    summary(hoiquy)
+    
+  })
+  #menu model predict ##############
+  newmovie <- na.omit(q3_cleaned_data) 
+  lm_datamovieaa = subset(newmovie, newmovie$country == "USA")
+  lm_datamovie <- select(lm_datamovieaa, c(
+    num_critic_for_reviews,
+    duration ,
+    num_voted_users,    
+    num_user_for_reviews,   
+    title_year ,  
+    budget,
+    imdb_score
+  ))
+  lm_mov <- lm(imdb_score ~ ., data=lm_datamovie)
+  lm_small <- step(lm_mov, direction = "backward", trace = FALSE)
+  
+  output$summary_predict <- renderPrint({
+    summary(lm_mov)
+  })
+  output$plot_predict_1 <- renderPlot({
+    pairs.panels(lm_datamovie, col='red')
+  })
+
+  
+  
+  observeEvent(input$show_predict1, {
+    showModal(modalDialog(
+      title = "Result Predict",
+      tabsetPanel(
+        tabPanel("Result", verbatimTextOutput("hisplot_predict_2")),
+        
+      ),
+      
+    ))
+    
+  })
+  histdata <- rnorm(500)
+  output$hisplot_predict_2 <- renderPrint({
+    num_critic_for_reviews = as.numeric(input$input_num_critic_for_reviews)
+    duration  = as.numeric(input$input_duration)
+    num_voted_users = as.numeric(input$input_num_voted_users)  
+    num_user_for_reviews = as.numeric(input$input_num_user_for_reviews) 
+    title_year  = as.numeric(input$input_title_year)
+    budget = as.numeric(input$input_budget)
+    
+    mov_fh <- data.frame(
+      num_critic_for_reviews = num_critic_for_reviews,
+      duration = duration,
+      num_voted_users= num_voted_users,
+      num_user_for_reviews= num_user_for_reviews, 
+      title_year = title_year,
+      budget = budget
+    )
+    
+    prediction_TFH <- predict(lm_small, newdata=mov_fh, interval="confidence")
+    print(prediction_TFH)
+    
+    
+  })
+  
+  
+  # kmeans ##################
+  topDirectors = movie %>%
+    subset(director_name != "") %>%
+    group_by(director_name) %>%
+    subset(mean_score = mean(imdb_score))%>%
+    summarise(director_movies_count = n(), meanscore = mean(imdb_score))%>%
+    filter(director_movies_count > 1)
+  data_ss = select(topDirectors, c(2,3))
+  data_scale = scale(data_ss)
+  irisdata = dist(data_scale)
+  output$ebow_plot = renderPlot({
+    fviz_nbclust(data_scale, kmeans, method = "wss")+labs(subtitle = "Ebow")
+  })
+  output$kmeans_plot = renderPlot({
+    km.out <- kmeans(data_scale, centers = 6, nstart = 100)
+    fviz_cluster(list(data= data_scale, cluster= km.out$cluster))
+  })
+  
+  
+  
 }
 
 shinyApp(ui, server)
